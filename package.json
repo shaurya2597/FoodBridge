@@ -1,0 +1,10 @@
+{
+  "name": "foodbridge",
+  "private": true,
+  "workspaces": ["backend"],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace backend",
+    "db:migrate": "npm run prisma:migrate --workspace backend",
+    "db:seed": "npm run prisma:seed --workspace backend"
+  }
+}

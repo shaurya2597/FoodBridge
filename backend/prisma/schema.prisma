@@ -1,0 +1,530 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  RESTAURANT_OWNER
+  NGO
+  ADMIN
+}
+
+enum RestaurantStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum OrderStatus {
+  PLACED
+  ACCEPTED
+  PREPARING
+  READY
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  COD
+  UPI
+  RAZORPAY
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum DonationStatus {
+  POSTED
+  NGO_REQUESTED
+  ACCEPTED
+  PICKUP_SCHEDULED
+  COLLECTED
+  DISTRIBUTED
+  EXPIRED
+  FLAGGED
+  CANCELLED
+}
+
+enum DonorType {
+  INDIVIDUAL
+  RESTAURANT
+}
+
+enum FoodType {
+  VEG
+  NON_VEG
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum AssistanceStatus {
+  OPEN
+  ASSIGNED
+  FULFILLED
+  CLOSED
+}
+
+enum ComplaintStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  REJECTED
+}
+
+enum DiscountType {
+  PERCENT
+  FLAT
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  phone        String?
+  passwordHash String
+  role         Role      @default(CUSTOMER)
+  isBlocked    Boolean   @default(false)
+  blockedReason String?
+  // Bumped on password change/reset and "log out everywhere": tokens carrying an older number stop working.
+  tokenVersion Int       @default(0)
+  resetToken   String?   // SHA-256 hash of the emailed token, never the token itself
+  resetExpires DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  addresses     Address[]
+  restaurants   Restaurant[]
+  cart          Cart?
+  orders        Order[]
+  reviews       Review[]
+  foodReviews   FoodReview[]
+  donations     Donation[]
+  ngoProfile    NGOProfile?
+  assistance    FoodAssistanceRequest[]
+  complaints    Complaint[]
+  notifications Notification[]
+  auditLogs     AuditLog[]
+
+  @@index([role])
+  @@index([resetToken])
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  label     String   @default("Home")
+  line1     String
+  line2     String?
+  city      String
+  state     String
+  pincode   String
+  latitude  Float?
+  longitude Float?
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders    Order[]
+
+  @@index([userId])
+}
+
+model Restaurant {
+  id           String           @id @default(cuid())
+  ownerId      String
+  name         String
+  slug         String           @unique
+  description  String
+  cuisines     String[]
+  imageUrl     String
+  bannerUrl    String?
+  address      String
+  city         String
+  latitude     Float?
+  longitude    Float?
+  rating       Float            @default(0)
+  ratingCount  Int              @default(0)
+  deliveryTime Int              @default(30)
+  deliveryFee  Decimal          @default(0) @db.Decimal(10, 2)
+  minOrder     Decimal          @default(0) @db.Decimal(10, 2)
+  priceForTwo  Int              @default(300)
+  isVegOnly    Boolean          @default(false)
+  isOpen       Boolean          @default(true)
+  opensAt      String           @default("10:00")
+  closesAt     String           @default("23:00")
+  status       RestaurantStatus @default(PENDING)
+  moderationNote String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  owner      User           @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  categories FoodCategory[]
+  foods      FoodItem[]
+  orders     Order[]
+  reviews    Review[]
+  carts      Cart[]
+  donations  Donation[]
+
+  @@index([status, city])
+  @@index([ownerId])
+}
+
+model FoodCategory {
+  id           String     @id @default(cuid())
+  restaurantId String
+  name         String
+  sortOrder    Int        @default(0)
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  foods        FoodItem[]
+
+  @@unique([restaurantId, name])
+}
+
+model FoodItem {
+  id             String   @id @default(cuid())
+  restaurantId   String
+  categoryId     String
+  name           String
+  description    String
+  price          Decimal  @db.Decimal(10, 2)
+  imageUrl       String
+  foodType       FoodType
+  rating         Float    @default(0)
+  ratingCount    Int      @default(0)
+  isAvailable    Boolean  @default(true)
+  isPopular      Boolean  @default(false)
+  customizations Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  restaurant Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  category   FoodCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+  foodReviews FoodReview[]
+
+  @@index([restaurantId, isAvailable])
+  @@index([categoryId])
+  @@index([name])
+}
+
+model Cart {
+  id           String      @id @default(cuid())
+  userId       String      @unique
+  restaurantId String?
+  updatedAt    DateTime    @updatedAt
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: SetNull)
+  items        CartItem[]
+
+  @@index([restaurantId])
+}
+
+model CartItem {
+  id            String   @id @default(cuid())
+  cartId        String
+  foodItemId    String
+  quantity      Int      @default(1)
+  customization Json?
+  instructions  String?
+  // sha1 of food + selected options + instructions: identical lines merge into one row
+  lineKey       String
+  cart          Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  foodItem      FoodItem @relation(fields: [foodItemId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, lineKey])
+  @@index([cartId])
+  @@index([foodItemId])
+}
+
+model Coupon {
+  id           String       @id @default(cuid())
+  code         String       @unique
+  description  String
+  discountType DiscountType
+  value        Decimal      @db.Decimal(10, 2)
+  maxDiscount  Decimal?     @db.Decimal(10, 2)
+  minOrder     Decimal      @default(0) @db.Decimal(10, 2)
+  validUntil   DateTime
+  usageLimit   Int?
+  usedCount    Int          @default(0)
+  perUserLimit Int          @default(1)
+  isActive     Boolean      @default(true)
+  orders       Order[]
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  userId          String
+  restaurantId    String
+  addressId       String?
+  deliveryAddress String
+  contactName     String
+  contactPhone    String
+  instructions    String?
+  status          OrderStatus @default(PLACED)
+  subtotal        Decimal     @db.Decimal(10, 2)
+  deliveryFee     Decimal     @db.Decimal(10, 2)
+  tax             Decimal     @db.Decimal(10, 2)
+  platformFee     Decimal     @db.Decimal(10, 2)
+  discount        Decimal     @default(0) @db.Decimal(10, 2)
+  total           Decimal     @db.Decimal(10, 2)
+  couponId        String?
+  estimatedAt     DateTime
+  cancelReason    String?
+  statusHistory   Json        @default("[]")
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  restaurant Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Restrict)
+  address    Address?    @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  coupon     Coupon?     @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  items      OrderItem[]
+  payment    Payment?
+  review     Review?
+  complaints Complaint[]
+
+  @@index([userId, createdAt])
+  @@index([restaurantId, status])
+  @@index([status, createdAt])
+  @@index([addressId])
+  @@index([couponId])
+}
+
+model OrderItem {
+  id            String   @id @default(cuid())
+  orderId       String
+  foodItemId    String
+  name          String
+  unitPrice     Decimal  @db.Decimal(10, 2)
+  quantity      Int
+  customization Json?
+  instructions  String?
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  foodItem      FoodItem @relation(fields: [foodItemId], references: [id], onDelete: Restrict)
+  foodReview    FoodReview?
+
+  @@index([orderId])
+  @@index([foodItemId])
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  orderId     String        @unique
+  method      PaymentMethod
+  status      PaymentStatus @default(PENDING)
+  amount      Decimal       @db.Decimal(10, 2)
+  isDemo      Boolean       @default(false)
+  providerRef       String?   // Razorpay order id (or demo_* id in demo mode)
+  providerPaymentId String?   // Razorpay payment id (or demo_* id)
+  paidAt            DateTime?
+  note              String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id           String     @id @default(cuid())
+  userId       String
+  restaurantId String
+  orderId      String?    @unique
+  rating       Int
+  comment      String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @default(now()) @updatedAt
+  user         User       @relation(fields: [userId], references: [id], onDelete: Restrict)
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  order        Order?     @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId, createdAt])
+  @@index([userId])
+}
+
+model FoodReview {
+  id          String    @id @default(cuid())
+  userId      String
+  foodItemId  String
+  orderItemId String    @unique // one review per ordered line
+  rating      Int
+  comment     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  foodItem    FoodItem  @relation(fields: [foodItemId], references: [id], onDelete: Cascade)
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  @@index([foodItemId, createdAt])
+  @@index([userId])
+}
+
+model NGOProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  orgName        String
+  registrationNo String?  @unique
+  contactEmail   String
+  contactPhone   String
+  serviceCity    String
+  serviceArea    String?
+  description    String?
+  isVerified     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requests       DonationRequest[]
+  donations      Donation[]
+  assistanceRequests FoodAssistanceRequest[]
+}
+
+model Donation {
+  id              String         @id @default(cuid())
+  donorId         String
+  restaurantId    String?
+  donorName       String
+  donorType       DonorType
+  foodName        String
+  category        String
+  quantity        String
+  servings        Int
+  foodType        FoodType
+  preparedAt      DateTime
+  expiresAt       DateTime
+  pickupAddress   String
+  city            String
+  latitude        Float?
+  longitude       Float?
+  contactPhone    String
+  imageUrl        String?
+  instructions    String?
+  safetyConfirmed Boolean        @default(false)
+  pickupScheduledAt DateTime?
+  flagReason      String?
+  status          DonationStatus @default(POSTED)
+  claimedByNgoId  String?
+  statusHistory   Json           @default("[]")
+  version         Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  donor      User        @relation(fields: [donorId], references: [id], onDelete: Restrict)
+  restaurant Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: SetNull)
+  // Restrict: an NGO that has claimed donations cannot be hard-deleted (block it instead).
+  claimedBy  NGOProfile? @relation(fields: [claimedByNgoId], references: [id], onDelete: Restrict)
+  requests   DonationRequest[]
+  complaints Complaint[]
+
+  @@index([status, expiresAt])
+  @@index([city, status])
+  @@index([donorId])
+  @@index([claimedByNgoId])
+  @@index([restaurantId])
+}
+
+model DonationRequest {
+  id         String        @id @default(cuid())
+  donationId String
+  ngoId      String
+  message    String?
+  status     RequestStatus @default(PENDING)
+  createdAt  DateTime      @default(now())
+  donation   Donation      @relation(fields: [donationId], references: [id], onDelete: Cascade)
+  ngo        NGOProfile    @relation(fields: [ngoId], references: [id], onDelete: Cascade)
+
+  @@unique([donationId, ngoId])
+  @@index([ngoId, status])
+}
+
+model FoodAssistanceRequest {
+  id          String           @id @default(cuid())
+  userId      String?
+  name        String
+  phone       String
+  people      Int
+  requirement String
+  foodType    FoodType?
+  location    String
+  city        String
+  notes       String?
+  status      AssistanceStatus @default(OPEN)
+  assignedNgoId String?
+  statusHistory Json           @default("[]")
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  user        User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  // Restrict: an NGO that has taken on requests cannot be hard-deleted (block it instead).
+  assignedNgo NGOProfile?      @relation(fields: [assignedNgoId], references: [id], onDelete: Restrict)
+
+  @@index([status, city])
+  @@index([userId])
+  @@index([assignedNgoId, status])
+  @@index([phone, status])
+}
+
+model Complaint {
+  id         String          @id @default(cuid())
+  userId     String
+  orderId    String?
+  donationId String?
+  category   String          @default("OTHER")
+  subject    String
+  details    String
+  status     ComplaintStatus @default(OPEN)
+  resolution String?
+  resolvedAt DateTime?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  user       User            @relation(fields: [userId], references: [id], onDelete: Restrict)
+  // Optional link; if the order row is ever removed the complaint is kept.
+  order      Order?          @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  donation   Donation?       @relation(fields: [donationId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([donationId])
+  @@index([userId])
+  @@index([orderId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String
+  entityType String
+  entityId   String
+  details    Json?
+  createdAt  DateTime @default(now())
+  admin      User     @relation(fields: [adminId], references: [id], onDelete: Restrict)
+
+  @@index([entityType, entityId])
+  @@index([adminId, createdAt])
+  @@index([createdAt])
+}

@@ -1,0 +1,20 @@
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
+import { clientOrigins, env } from './config/env';
+import routes from './routes';
+import { errorHandler, notFound } from './middleware/error';
+
+export const app = express();
+app.disable('x-powered-by');
+if (env.TRUST_PROXY > 0) app.set('trust proxy', env.TRUST_PROXY);
+app.use(helmet());
+app.use(cors({ origin: clientOrigins, credentials: true }));
+app.use(express.json({ limit: '1mb' }));
+if (env.NODE_ENV !== 'test') app.use(morgan('dev'));
+app.use('/api', rateLimit({ windowMs: 60_000, limit: 300, standardHeaders: true, legacyHeaders: false }));
+app.use('/api', routes);
+app.use(notFound);
+app.use(errorHandler);

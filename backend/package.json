@@ -1,0 +1,54 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "typecheck": "tsc --noEmit",
+    "prisma:validate": "prisma validate",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:seed:reset": "cross-env RESET_DEMO_DATA=true tsx prisma/seed.ts",
+    "test:unit": "tsx --test tests/unit/pricing.test.ts tests/unit/orderStateMachine.test.ts tests/unit/payments.test.ts tests/unit/cartAndReviews.test.ts tests/unit/donations.test.ts tests/unit/admin.test.ts",
+    "test:integration": "tsx --test tests/integration/orders.flow.test.ts tests/integration/sockets.test.ts tests/integration/donations.flow.test.ts tests/integration/donations.sockets.test.ts tests/integration/admin.flow.test.ts tests/integration/admin.sockets.test.ts",
+    "test": "npm run test:unit && npm run test:integration"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "nodemailer": "^6.9.16",
+    "socket.io": "^4.8.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^22.7.0",
+    "@types/nodemailer": "^6.4.17",
+    "cross-env": "^7.0.3",
+    "prisma": "^5.22.0",
+    "socket.io-client": "^4.8.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
