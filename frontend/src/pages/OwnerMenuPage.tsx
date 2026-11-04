@@ -165,7 +165,7 @@ export function OwnerMenuPage() {
                   <input required minLength={2} maxLength={50} value={form.categoryName} onChange={(e) => setForm({ ...form, categoryName: e.target.value })} placeholder="e.g. Biryani" className="w-full rounded-xl border border-slate-200 px-3 py-2.5" />
                 </label>
                 <label className="space-y-1 text-sm font-medium text-slate-700">
-                  Price (ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¹)
+                  Price (₹)
                   <input required type="number" min="0.01" max="10000" step="0.01" value={form.price || ''} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} className="w-full rounded-xl border border-slate-200 px-3 py-2.5" />
                 </label>
                 <label className="space-y-1 text-sm font-medium text-slate-700">

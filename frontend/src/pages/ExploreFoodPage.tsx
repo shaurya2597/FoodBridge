@@ -1,12 +1,30 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { Search, Star, UtensilsCrossed, Leaf, Loader2 } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Search, Star, UtensilsCrossed, Leaf, Loader2, Heart } from 'lucide-react'
+import { saveFood, removeSavedFood, getSavedItems } from '@/services/saved'
 import { getFoods, type FoodFilters } from '@/services/food'
 
 export function ExploreFoodPage() {
   const [search, setSearch] = useState('')
   const [foodType, setFoodType] = useState<FoodFilters['type']>()
+    const queryClient = useQueryClient()
+
+  const savedQuery = useQuery({
+    queryKey: ['customer', 'saved'],
+    queryFn: getSavedItems,
+  })
+
+  const savedFoodIds = new Set(
+    savedQuery.data?.foods.map((food) => food.id) ?? [],
+  )
+
+  const saveFoodMutation = useMutation({
+    mutationFn: ({ id, saved }: { id: string; saved: boolean }) =>
+      saved ? removeSavedFood(id) : saveFood(id),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['customer', 'saved'] }),
+  })
 
   const foodsQuery = useQuery({
     queryKey: ['foods', search, foodType],
@@ -103,6 +121,25 @@ export function ExploreFoodPage() {
                       Popular
                     </span>
                   )}
+                  <button
+  type="button"
+  aria-label={savedFoodIds.has(food.id) ? 'Remove from saved dishes' : 'Save dish'}
+  disabled={saveFoodMutation.isPending}
+  onClick={(event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    saveFoodMutation.mutate({
+      id: food.id,
+      saved: savedFoodIds.has(food.id),
+    })
+  }}
+  className="absolute right-3 top-3 grid size-10 place-items-center rounded-full bg-white shadow-md transition hover:scale-105 disabled:opacity-50"
+>
+  <Heart
+    size={19}
+    className={savedFoodIds.has(food.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'}
+  />
+</button>
                 </div>
                 <div className="space-y-3 p-4">
                   <div className="flex items-start justify-between gap-3">
@@ -121,7 +158,7 @@ export function ExploreFoodPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between border-t border-gray-100 pt-3">
-                    <span className="text-xl font-bold text-emerald-700">Γé╣{Number(food.price).toFixed(2)}</span>
+                  <span className="text-xl font-bold text-emerald-700">&#8377;{Number(food.price).toFixed(2)}</span>
                     <span className="flex items-center gap-1 text-xs text-emerald-700">
                       <Leaf className="h-4 w-4" /> Available
                     </span>

@@ -3,7 +3,7 @@ import { userMessage } from '@/services/apiError'
 import { getNgoSummary } from '@/services/ngo'
 import { useAuth } from '@/auth/AuthContext'
 import { Link } from 'react-router-dom'
-import { ArrowRight, ArrowUpRight, Clock3, HeartHandshake, Leaf, MapPin, PackageCheck, ShoppingBasket, Sparkles, Utensils } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Clock3, HeartHandshake, Leaf, MapPin, PackageCheck, ShoppingBasket, Sparkles, Utensils,CheckCircle2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { CustomerDashboard } from './CustomerDashboard'
 
@@ -57,7 +57,7 @@ export function WorkspacePage({ role }: { role: Role }) {
           ? 'bg-emerald-100 text-emerald-700'
           : 'bg-amber-100 text-amber-700'
       }`}>
-        {isNgoVerified ? 'âœ“' : 'â³'}
+       {isNgoVerified ? <CheckCircle2 size={20} /> : <Clock3 size={20} />}
       </span>
 
       <div>
@@ -177,7 +177,7 @@ export function WorkspacePage({ role }: { role: Role }) {
           <h2 className="mt-1 text-xl font-bold tracking-tight">Choose a workspace</h2>
         </div>
         <span className="hidden text-xs text-slate-400 sm:block">
-          Preview navigation Â· Authentication arrives in M2
+
         </span>
       </div>
 

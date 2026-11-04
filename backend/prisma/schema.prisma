@@ -120,6 +120,8 @@ model User {
   complaints    Complaint[]
   notifications Notification[]
   auditLogs     AuditLog[]
+  savedRestaurants SavedRestaurant[]
+  savedFoodItems   SavedFoodItem[]
 
   @@index([role])
   @@index([resetToken])
@@ -171,6 +173,7 @@ model Restaurant {
   moderationNote String?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
+  savedBy SavedRestaurant[]
 
   owner      User           @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   categories FoodCategory[]
@@ -211,7 +214,7 @@ model FoodItem {
   customizations Json?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-
+  savedBy SavedFoodItem[]
   restaurant Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   category   FoodCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   cartItems  CartItem[]
@@ -527,4 +530,29 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([adminId, createdAt])
   @@index([createdAt])
+}
+model SavedRestaurant {
+  id           String     @id @default(cuid())
+  userId       String
+  restaurantId String
+  createdAt    DateTime   @default(now())
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, restaurantId])
+  @@index([userId, createdAt])
+}
+
+model SavedFoodItem {
+  id         String   @id @default(cuid())
+  userId     String
+  foodItemId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foodItem FoodItem @relation(fields: [foodItemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, foodItemId])
+  @@index([userId, createdAt])
 }

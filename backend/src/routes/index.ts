@@ -15,6 +15,7 @@ import admin from './admin.routes';
 import complaintsRoutes from './complaint.routes';
 import { demoPaymentsAllowed, razorpayEnabled } from '../config/env';
 import { prisma } from '../config/prisma';
+import saved from './saved.routes';
 
 const r = Router();
 r.get('/health', async (_req, res) => {
@@ -34,6 +35,7 @@ r.use('/checkout', checkout);
 r.use('/orders', orders);
 r.use('/payments', payments);
 r.use('/reviews', reviews);
+r.use('/saved', saved);
 r.use('/addresses', addresses);
 r.use('/donations', donations);
 r.use('/assistance', assistance);

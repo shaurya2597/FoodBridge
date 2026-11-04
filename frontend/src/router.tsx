@@ -1,4 +1,4 @@
-import { MyOrdersPage } from './pages/MyOrdersPage'
+﻿import { MyOrdersPage } from './pages/MyOrdersPage'
 import { OrderDetailsPage } from './pages/OrderDetailsPage'
 import { CustomerDonationsPage } from './pages/CustomerDonationsPage'
 import { NGOPickupsPage } from './pages/NGOPickupsPage'
@@ -27,10 +27,15 @@ import { AdminOrdersPage } from './pages/AdminOrdersPage'
 import { AdminRestaurantsPage } from './pages/AdminRestaurantsPage'
 import { AdminUsersPage } from './pages/AdminUsersPage'
 import AdminDonationRequestsPage from './pages/AdminDonationRequestsPage'
+import { ExploreFoodPage } from './pages/ExploreFoodPage'
+import { CartPage } from './pages/CartPage'
+import { RestaurantDetailsPage } from './pages/RestaurantDetailsPage'
+import { SavedPage } from './pages/SavedPage'
+import { FoodDetailsPage } from './pages/FoodDetailsPage'
 
 function HomeRedirect() {
   const { user, loading } = useAuth()
-  if (loading) return <main className="grid min-h-screen place-items-center text-sm text-slate-500">Loading FoodBridgeâ€¦</main>
+  if (loading) return <main className="grid min-h-screen place-items-center text-sm text-slate-500">Loading FoodBridge...</main>
   return <Navigate to={user ? homeForRole(user.role) : '/login'} replace />
 }
 
@@ -50,6 +55,11 @@ export const router = createBrowserRouter([
     { path: '/customer/orders/:id', element: <AppLayout><OrderDetailsPage /></AppLayout> },
     { path: '/customer/assistance', element: <AppLayout><CustomerAssistancePage /></AppLayout> },
     { path: '/customer/assistance/requests', element: <AppLayout><CustomerAssistanceRequestsPage /></AppLayout> },
+{ path: '/customer/explore', element: <AppLayout><ExploreFoodPage /></AppLayout> },
+{ path: '/customer/food/:id', element: <AppLayout><FoodDetailsPage /></AppLayout> },
+{ path: '/customer/cart', element: <AppLayout><CartPage /></AppLayout> },
+{ path: '/customer/saved', element: <AppLayout><SavedPage /></AppLayout> },
+{ path: '/customer/restaurant/:id', element: <AppLayout><RestaurantDetailsPage /></AppLayout> },
     { path: '/customer/*', element: <AppLayout><WorkspacePage role="customer" /></AppLayout> },
   ],
 },

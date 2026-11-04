@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { useAuth } from '@/auth/AuthContext'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { Activity, ArrowRight, Bell, ClipboardList, HeartHandshake, LayoutDashboard, Leaf, Menu, Package, Search, Settings, ShoppingBag, Store, Users, UtensilsCrossed, X } from 'lucide-react'
+import { Activity, ArrowRight, Bell, ClipboardList, HeartHandshake, LayoutDashboard, Leaf, Menu, Package, Settings, ShoppingBag, Store, Users, UtensilsCrossed, X } from 'lucide-react'
 
 const roleLinks = {
  customer: [{ label: 'Overview', to: '/customer', icon: LayoutDashboard }, { label: 'Explore food', to: '/customer/explore', icon: UtensilsCrossed }, { label: 'Cart', to: '/customer/cart', icon: ShoppingBag }, { label: 'My orders', to: '/customer/orders', icon: Package }, { label: 'Saved', to: '/customer/saved', icon: HeartHandshake }, { label: 'Donate Food', to: '/customer/donate', icon: Leaf }, { label: 'My Donations', to: '/customer/donations', icon: HeartHandshake }, { label: 'Request Food Help', to: '/customer/assistance', icon: HeartHandshake }, { label: 'My Assistance Requests', to: '/customer/assistance/requests', icon: Users }],
@@ -30,12 +30,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <span className="text-[21px] font-extrabold tracking-tight">food<span className="text-emerald-700">bridge</span><span className="ml-1 align-top text-[10px] font-bold text-orange-500">.</span></span>
       </NavLink>
 
-      <div className="hidden flex-1 md:block">
-        <div className="mx-auto flex max-w-md items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-400">
-          <Search size={16}/><span>Search food, restaurants and more</span>
-          <kbd className="ml-auto rounded border bg-white px-1.5 py-0.5 text-[10px]">├ó┼Æ╦£ K</kbd>
-        </div>
-      </div>
 
       <div className="ml-auto flex items-center gap-2 sm:gap-3">
         <button aria-label="Notifications" className="relative rounded-full p-2.5 text-slate-600 hover:bg-slate-100">
@@ -80,13 +74,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <p className="px-3 text-[10px] font-bold uppercase tracking-[.16em] text-slate-400">Workspace</p>
         <div className="mt-3 rounded-2xl bg-emerald-50 px-3 py-3"><p className="text-xs font-semibold text-emerald-900">{roleNames[role]}</p><p className="mt-1 text-[11px] text-emerald-700">Your FoodBridge hub</p></div>
         <nav className="mt-5 space-y-1" aria-label="Main navigation">{links.map(({ label, to, icon: Icon }) => <NavLink key={to} to={to} end={to === `/${role}`} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition ${isActive ? 'bg-emerald-700 text-white shadow-sm shadow-emerald-900/10' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}><Icon size={17}/>{label}</NavLink>)}</nav>
-        <div className="mt-auto rounded-2xl bg-[#fff5e9] p-4"><div className="grid size-9 place-items-center rounded-xl bg-orange-100 text-orange-700"><HeartHandshake size={18}/></div><p className="mt-3 text-sm font-bold text-slate-900">Good food, less waste.</p><p className="mt-1 text-xs leading-5 text-slate-600">Every shared meal can make a difference in someone├óΓé¼Γäós day.</p><span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-orange-700">Our mission <ArrowRight size={13}/></span></div>
+        <div className="mt-auto rounded-2xl bg-[#fff5e9] p-4"><div className="grid size-9 place-items-center rounded-xl bg-orange-100 text-orange-700"><HeartHandshake size={18}/></div><p className="mt-3 text-sm font-bold text-slate-900">Good food, less waste.</p><p className="mt-1 text-xs leading-5 text-slate-600">Every shared meal can make a difference in someone's day.</p><span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-orange-700">Our mission <ArrowRight size={13}/></span></div>
         <NavLink to="/settings" className="mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium text-slate-500 hover:bg-slate-100"><Settings size={17}/>Settings</NavLink>
       </aside>
 
       {mobileOpen && <div className="fixed inset-0 z-50 bg-slate-950/40 lg:hidden" onClick={() => setMobileOpen(false)}><aside className="flex h-full w-[min(300px,85vw)] flex-col bg-white p-4 shadow-2xl" onClick={e => e.stopPropagation()}><div className="flex items-center justify-between"><span className="font-extrabold">food<span className="text-emerald-700">bridge</span></span><button aria-label="Close navigation" onClick={() => setMobileOpen(false)} className="rounded-lg p-2 hover:bg-slate-100"><X size={19}/></button></div><nav className="mt-7 space-y-1">{links.map(({ label, to, icon: Icon }) => <NavLink key={to} to={to} onClick={() => setMobileOpen(false)} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium ${isActive ? 'bg-emerald-700 text-white' : 'text-slate-600 hover:bg-slate-100'}`}><Icon size={18}/>{label}</NavLink>)}</nav><div className="mt-auto rounded-xl bg-orange-50 p-4 text-sm font-semibold">Good food, less waste.</div></aside></div>}
       <main className="min-w-0 flex-1 px-4 py-7 sm:px-6 sm:py-9 lg:px-10"> {children ?? <Outlet/>} </main>
     </div>
-    <footer className="border-t border-slate-200/80 bg-white px-6 py-5 text-center text-xs text-slate-400">├é┬⌐ {new Date().getFullYear()} FoodBridge ├é┬╖ Connecting food with those who need it.</footer>
+    <footer className="border-t border-slate-200/80 bg-white px-6 py-5 text-center text-xs text-slate-400">Copyright (c) {new Date().getFullYear()} FoodBridge - Connecting food with those who need it.</footer>
   </div>
 }
